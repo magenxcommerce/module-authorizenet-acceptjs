@@ -15,9 +15,6 @@ use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
 
 /**
  * Validates the status of an attempted transaction
- *
- * @deprecated 100.3.3 Starting from Magento 2.3.4 Authorize.net payment method core integration is deprecated in favor of
- * official payment integration available on the marketplace
  */
 class TransactionResponseValidator extends AbstractValidator
 {
@@ -57,7 +54,7 @@ class TransactionResponseValidator extends AbstractValidator
             if (isset($transactionResponse['messages']['message']['code'])) {
                 $errorCodes[] = $transactionResponse['messages']['message']['code'];
                 $errorMessages[] = $transactionResponse['messages']['message']['text'];
-            } elseif (isset($transactionResponse['messages']['message'])) {
+            } elseif ($transactionResponse['messages']['message']) {
                 foreach ($transactionResponse['messages']['message'] as $message) {
                     $errorCodes[] = $message['code'];
                     $errorMessages[] = $message['description'];
@@ -65,7 +62,7 @@ class TransactionResponseValidator extends AbstractValidator
             } elseif (isset($transactionResponse['errors'])) {
                 foreach ($transactionResponse['errors'] as $message) {
                     $errorCodes[] = $message['errorCode'];
-                    $errorMessages[] = $message['errorText'];
+                    $errorMessages[] = $message['errorCode'];
                 }
             }
 
@@ -88,8 +85,8 @@ class TransactionResponseValidator extends AbstractValidator
             ?? $transactionResponse['errors'][0]['errorCode']
             ?? null;
 
-        return !in_array($transactionResponse['responseCode'], [self::RESPONSE_CODE_APPROVED, self::RESPONSE_CODE_HELD])
-            || $code
+        return in_array($transactionResponse['responseCode'], [self::RESPONSE_CODE_APPROVED, self::RESPONSE_CODE_HELD])
+            && $code
             && !in_array(
                 $code,
                 [
